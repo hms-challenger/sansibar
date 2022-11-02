@@ -7,6 +7,7 @@ from datetime import date
 import urllib.request
 import shutil
 from config import *
+import glob
 
 # month to select from when running
 monthTotal = {
@@ -332,9 +333,13 @@ print("csv-file ready for upload!")
 print("-----------------------------------------------------------------\n")
 
 # pdf download
+jsonCounter = len(glob.glob1("../SansSibar","*.json"))
+print(jsonCounter)
+
 i = 0
 countOrders = 1
-while True:
+
+for j in range(jsonCounter):
     with open("data"+str(i)+".json", "r") as infile:
         data = json.loads(infile.read())
         count = data['count']
