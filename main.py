@@ -161,6 +161,7 @@ countZero = 0
 countNotPaid = 0
 countTrueOrder = 0
 
+
 # csv writer function
 def csv_writer(month, header):
     with open("HoertHinGmbH_EcwidOrders" + str(month) + ".csv", "a", encoding='UTF8', newline='') as csvfile:
