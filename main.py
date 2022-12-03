@@ -2,7 +2,7 @@ import requests
 import json
 import csv
 import os
-from datetime import datetime
+# from datetime import datetime
 from datetime import date
 import urllib.request
 import shutil
@@ -160,7 +160,7 @@ countJSONData = 100
 countZero = 0
 countNotPaid = 0
 countTrueOrder = 0
-
+countCanceled = 0
 
 # csv writer function
 def csv_writer(month, header):
@@ -170,22 +170,26 @@ def csv_writer(month, header):
         writer.writerow(header.values())
     csvfile.close()
 
-print("\n")
-# wait for user input - choose month
-for months,number in monthTotal.items():
-    print(str(number).zfill(2), months)
+# print("\n")
+# # waiting for user input - choose month
+# for months,number in monthTotal.items():
+#     print(str(number).zfill(2), months)
 
-today = datetime.today()
-datem = datetime(today.year, today.month, 1)
+today = date.today()
+month = int(str(today).split()[0].split('-')[1]) - 1
+print(month)
+if month == 0:
+    year = int(str(today).split('-')[0]) - 1
+    month = 12
+    print(date(year, month, 1))
 
-while True:
-    month = int(input("\n>>> Select a month: "))
-    if month > today.month:
-        print("selected month has to be in the past. try again!")
-        continue
-    else:
-        break
-
+# while True:
+#     month = int(input("\n>>> Select a month: "))
+#     if month > today.month:
+#         print("selected month has to be in the past. try again!")
+#         continue
+#     else:
+#         break
 
 # make folder for invoices
 folder = "Ecwid_Rechnungen_" + str(month) + "_" + str(date.today())
@@ -193,6 +197,13 @@ if not os.path.exists(folder):
     os.mkdir(folder)
 else:
     print(folder, "exists!")
+
+# make canceled for invoices
+canceledFolder = "Storno_" + str(month) + "_" + str(date.today())
+if not os.path.exists(canceledFolder):
+    os.mkdir(canceledFolder)
+else:
+    print(canceledFolder, "exists!")
 
 # read json-files
 k = 0
@@ -234,6 +245,8 @@ while True:
                 if orderMonth == month:
                     if data['items'][v]['paymentStatus'] != 'PAID':
                         countNotPaid += 1
+                    if data['items'][v]['paymentStatus'] == 'CANCELLED':
+                        countCanceled += 1
 
                     if data['items'][v]['total'] == 0:
                         countZero += 1
@@ -329,10 +342,12 @@ while True:
 print("\n-----------------------------------------------------------------")
 print("bills not paid:", countNotPaid)
 print("0€ skipped invoices:", countZero)
+print("canceld counter:", countCanceled)
 print("orders transfered to csv:", countTrueOrder, "\n")
 print("csv-file ready for upload!")
 print("-----------------------------------------------------------------\n")
 
+exit(0)
 # pdf download
 jsonCounter = len(glob.glob1("../SansSibar","*.json"))
 print(jsonCounter)
@@ -361,16 +376,29 @@ for j in range(jsonCounter):
                     # download pdf files
                     pdf_file = "Rechnung_" + str(data['items'][v]['invoices'][0]['id']) + "_für_Bestellung_" + str(data['items'][v]['id'])
                     pdf_path = data['items'][v]['invoices'][0]['link']
+
                     def download_file(download_url, filename):
                         response = urllib.request.urlopen(download_url)    
                         file = open(pdf_file + ".pdf", 'wb')
                         file.write(response.read())
                         file.close()
+
                     # move pdf file to new folder
-                    download_file(pdf_path, "Test")
+                    download_file(pdf_path, " ")
                     print((str(countOrders)+"/"+str(countTrueOrder)), "downloading pdf:", pdf_file)
                     countOrders +=1 
                     shutil.move((pdf_file + ".pdf"), (folder + "/" + pdf_file + ".pdf"))
+
+                    # if data['items'][v]['paymentStatus'] == 'CANCELLED':
+                    #     canceled = len(data['items'][v]['invoices'])
+                    #     for k in range(canceled):
+                    #         pdf_path = data['items'][v]['invoices'][k]['link']
+                    #         if data['items'][v]['invoices'][k]['type'] == 'FULL_CANCEL':
+                    #             pdf_file = "Storno_" + str(data['items'][v]['invoices'][k]['id']) + "_für_Bestellung_" + str(data['items'][v]['id'])
+                    #             print((str(countOrders)+"/"+str(countTrueOrder)), "downloading pdf:", pdf_file)
+                    #             download_file(pdf_path, "Test")
+                    #             shutil.move((pdf_file + ".pdf"), (canceledFolder + "/" + pdf_file + ".pdf"))
+                    #         k += 1
     i += 1
     if orderMonth == month -2:
         break
