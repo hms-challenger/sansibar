@@ -15,3 +15,4 @@ ecwid api
 - run script via cronjob on every first day of a month
 - notification for availibilty of downloaded receipts
 - user interface for downloading receipts on local machine, or dropbox?
+- send csv-file + receipts download link via email for accounting
