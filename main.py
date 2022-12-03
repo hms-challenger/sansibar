@@ -347,7 +347,6 @@ print("orders transfered to csv:", countTrueOrder, "\n")
 print("csv-file ready for upload!")
 print("-----------------------------------------------------------------\n")
 
-exit(0)
 # pdf download
 jsonCounter = len(glob.glob1("../SansSibar","*.json"))
 print(jsonCounter)
