@@ -177,12 +177,11 @@ def csv_writer(month, header):
 
 today = date.today()
 month = int(str(today).split()[0].split('-')[1]) - 1
-print(month)
 if month == 0:
     year = int(str(today).split('-')[0]) - 1
     month = 12
-    print(date(year, month, 1))
 
+print("getting ecwid data for month:", month, "on",today)
 # while True:
 #     month = int(input("\n>>> Select a month: "))
 #     if month > today.month:
@@ -195,6 +194,7 @@ if month == 0:
 folder = "Ecwid_Rechnungen_" + str(month) + "_" + str(date.today())
 if not os.path.exists(folder):
     os.mkdir(folder)
+    print(folder)
 else:
     print(folder, "exists!")
 
@@ -202,6 +202,7 @@ else:
 canceledFolder = "Storno_" + str(month) + "_" + str(date.today())
 if not os.path.exists(canceledFolder):
     os.mkdir(canceledFolder)
+    print(canceledFolder)
 else:
     print(canceledFolder, "exists!")
 
@@ -215,19 +216,19 @@ csvfile.close()
 
 # main loop
 # get data from ecwid api and store to json
-print("getting ecwid data...")
 while True:
     response = requests.get("https://app.ecwid.com/api/v3/"+str(id)+"/orders?offset="+str(offset)+"&limit=100&token="+str(token))
     data = response.json()
     json_object = json.dumps(data, indent=4, ensure_ascii=False)
     with open("data"+str(i)+".json", "w") as outfile:
         outfile.write(json_object)
-    print(data)
+    # print(data)
     outfile.close()
 
     while True:
         # open json for reading only
         with open("data"+str(i)+".json", "r") as infile:
+            print("data"+str(i)+".json")
             data = json.loads(infile.read())
             count = data['count']
             v = 0
@@ -250,7 +251,7 @@ while True:
 
                     if data['items'][v]['total'] == 0:
                         countZero += 1
-                        print("invoice to skip:", data['items'][v]['id'], (str(data['items'][v]['total']) + "€ <<<"), data['items'][v]['billingPerson']['name'])
+                        # print("invoice to skip:", data['items'][v]['id'], (str(data['items'][v]['total']) + "€ <<<"), data['items'][v]['billingPerson']['name'])
                         pass
 
                     else:
@@ -323,8 +324,8 @@ while True:
                             # append to csv, when only one product in invoice
                             csv_writer(month, header)
 
-                        # print status in terminal only
-                        print(">>> invoice ready for download:", str(data['items'][v]['invoices'][0]['id']), "orders:", res)
+                        # # print status in terminal only
+                        # print(">>> invoice ready for download:", str(data['items'][v]['invoices'][0]['id']), "orders:", res)
                         countTrueOrder += 1
 
                     v += 1
@@ -349,7 +350,7 @@ print("-----------------------------------------------------------------\n")
 
 # pdf download
 jsonCounter = len(glob.glob1("../SansSibar","*.json"))
-print(jsonCounter)
+# print(jsonCounter)
 
 i = 0
 countOrders = 1
@@ -388,16 +389,16 @@ for j in range(jsonCounter):
                     countOrders +=1 
                     shutil.move((pdf_file + ".pdf"), (folder + "/" + pdf_file + ".pdf"))
 
-                    # if data['items'][v]['paymentStatus'] == 'CANCELLED':
-                    #     canceled = len(data['items'][v]['invoices'])
-                    #     for k in range(canceled):
-                    #         pdf_path = data['items'][v]['invoices'][k]['link']
-                    #         if data['items'][v]['invoices'][k]['type'] == 'FULL_CANCEL':
-                    #             pdf_file = "Storno_" + str(data['items'][v]['invoices'][k]['id']) + "_für_Bestellung_" + str(data['items'][v]['id'])
-                    #             print((str(countOrders)+"/"+str(countTrueOrder)), "downloading pdf:", pdf_file)
-                    #             download_file(pdf_path, "Test")
-                    #             shutil.move((pdf_file + ".pdf"), (canceledFolder + "/" + pdf_file + ".pdf"))
-                    #         k += 1
+                    if data['items'][v]['paymentStatus'] == 'CANCELLED':
+                        canceled = len(data['items'][v]['invoices'])
+                        for k in range(canceled):
+                            pdf_path = data['items'][v]['invoices'][k]['link']
+                            if data['items'][v]['invoices'][k]['type'] == 'FULL_CANCEL':
+                                pdf_file = "Storno_" + str(data['items'][v]['invoices'][k]['id']) + "_für_Bestellung_" + str(data['items'][v]['id'])
+                                print((str(countOrders)+"/"+str(countTrueOrder)), "downloading pdf:", pdf_file)
+                                download_file(pdf_path, "Test")
+                                shutil.move((pdf_file + ".pdf"), (canceledFolder + "/" + pdf_file + ".pdf"))
+                            k += 1
     i += 1
     if orderMonth == month -2:
         break
@@ -406,7 +407,7 @@ for j in range(jsonCounter):
 shutil.move(("HoertHinGmbH_EcwidOrders" + str(month) + ".csv"), (folder + "/HoertHinGmbH_EcwidOrders" + str(month) + ".csv"))
 print("\n-----------------------------------------------------------------")
 print("csv-file has been moved to folder " + "/" + folder)
-print("\njob done!\n")
+print("\njob done!" +fullDate+ "\n")
 
 # remove json-files
 i = 0
@@ -414,8 +415,8 @@ while True:
     if os.path.exists("data"+str(i)+".json"):
         os.remove("data"+str(i)+".json")
     else:
-        print("all json-files removed!")
-        print("-----------------------------------------------------------------\n")
+        # print("all json-files removed!")
+        # print("-----------------------------------------------------------------\n")
         break
     i += 1
 
